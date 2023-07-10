@@ -40,11 +40,16 @@ object Streaming {
       .add("target", IntegerType);
 
     val customerDetail = customerLogStringDf
+      // read key value from json record, parse value to schema
       .select(col("key").as("key"), from_json(col("value"), schema).as("data"))
+      // alias key and data as customerLog
       .select("key", "data.*").alias("customerLog")
+      // join with userData on customer_id
       .join(userData, col("customerLog.customer_id") === userData("id"), "inner")
+      // select fields
       .select(col("key"),
         to_json(struct("id", "gender", "birth_year", "customerLog.source", "customerLog.target")).alias("value"))
+      // filter data
       .filter(col("gender") === 1)
       .filter(col("customerLog.target") === 1)
       .filter(col("customerLog.source") !== col("customerLog.target"))
